@@ -1,0 +1,14 @@
+{
+  "name": "xiaomairplane",
+  "version": "1.0.0",
+  "description": "一个mini的微前端框架",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^4.1.1"
+  }
+}
