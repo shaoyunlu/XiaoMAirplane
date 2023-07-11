@@ -1,4 +1,4 @@
-import {registerApplication} from './src/application/apps'
+import {registerApplication ,start} from './src/application/apps'
 
 
-export {registerApplication}
+export {registerApplication ,start}

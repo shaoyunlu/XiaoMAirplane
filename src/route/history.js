@@ -3,7 +3,7 @@ import {loadApps} from '../application/apps'
 const originalPushState = window.history.pushState
 const originalReplaceState = window.history.replaceState
 
-export default function overwriteEventsAndHistory(){
+export function overwriteEventsAndHistory(){
     window.history.pushState = (state ,title ,url)=>{
         const result = originalPushState.call(this,state,title,url)
         loadApps()
