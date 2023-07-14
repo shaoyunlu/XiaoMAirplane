@@ -4,7 +4,7 @@ import {wrapEventListener ,clearWrapEventListener ,
 class Sandbox{
     constructor(){
         this.proxyWindow = null
-        this.injectKeySet = new Set()
+        this.injectKeyMap = new Map()
         this.windowEventMap = new Map()
         this.timeoutSet = new Set()
         this.intervalSet = new Set()
@@ -12,15 +12,37 @@ class Sandbox{
     }
 
     init(){
-        this.proxyWindow = createWindowProxy(this.injectKeySet)
+        this.proxyWindow = createWindowProxy(this.injectKeyMap)
         this.proxyWindow.addEventListener = wrapEventListener(this.windowEventMap)
         this.proxyWindow.setInterval = wrapSetInterval(this.intervalSet)
         this.proxyWindow.setTimeout = wrapSetTimeout(this.timeoutSet)
     }
 
+    recover(){
+        // 恢复绑定事件
+        this.windowEventMap.forEach((handleList ,eventName)=>{
+            handleList.forEach(({listener ,options}) =>{
+                window.addEventListener(eventName ,listener ,options)
+            })
+        })
+
+        // 恢复全局变量
+        this.injectKeyMap.forEach((value ,key)=>{
+            if (key.indexOf('xm-airplane') < 0){
+                this.proxyWindow[key] = value
+            }
+        })
+
+        // 恢复样式
+    }
+
     unmount(){
-        for (let key of this.injectKeySet){
-            Reflect.defineProperty(this.proxyWindow ,key)
+        if (this.proxyWindow){
+            this.injectKeyMap.forEach((value ,key)=>{
+                if (key.indexOf('xm-airplane') < 0){
+                    delete this.proxyWindow[key]
+                }
+            })
         }
         clearWrapEventListener(this.windowEventMap)
         clearWrapSetInterval(this.intervalSet)
@@ -31,7 +53,7 @@ class Sandbox{
 export default Sandbox
 
 
-function createWindowProxy(injectKeySet){
+function createWindowProxy(injectKeyMap){
     return new Proxy({} ,{
         get(target ,key) {
             if (Reflect.has(target ,key)){
@@ -46,7 +68,7 @@ function createWindowProxy(injectKeySet){
             }
         },
         set(target ,key ,value){
-            injectKeySet.add(key)
+            injectKeyMap.set(key ,value)
             return Reflect.set(target ,key ,value)
         }
     })
@@ -56,6 +78,6 @@ function isFunction(variable){
     return (typeof variable === 'function')
 }
 
-function needToBindOriginalWindow(){
+function needToBindOriginalWindow(variable){
     return window.hasOwnProperty(variable.name)
 }

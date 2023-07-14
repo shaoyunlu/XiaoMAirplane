@@ -55,9 +55,13 @@ export function start(){
 function bootstrapApp(app){
     return new Promise((resolve ,reject)=>{
         parseHTML(app).then((doc)=>{
+            let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
             appsMapping[app.name].doc = doc
             appsMapping[app.name].status = AppStatus.BOOTSTRAPPED
-            resolve()
+            appsMapping[app.name].isInit = true
+            loadSources(appsMapping[app.name].doc ,app ,proxyWindow).then(()=>{
+                resolve()
+            })
         })
     })
 }
@@ -66,21 +70,11 @@ function mountApp(app){
     return new Promise((resolve ,reject)=>{
         if (appsMapping[app.name].application.activeRule(window.location)){
             let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
-            // 首次挂载需要先加载资源
-            if (!appsMapping[app.name].isInit){
-                appsMapping[app.name].isInit = true
-                loadSources(appsMapping[app.name].doc ,app ,proxyWindow).then(()=>{
-                    proxyWindow['xm-airplane-'+app.name].mount()
-                    resolve()
-                })
-            }else{
-                proxyWindow['xm-airplane-'+app.name].mount()
-                resolve()
-            }
             appsMapping[app.name].status = AppStatus.MOUNTED
-        }else{
-            resolve()
+            appsMapping[app.name].sandbox.recover()
+            proxyWindow['xm-airplane-'+app.name].mount()
         }
+        resolve()
     })
 }
 

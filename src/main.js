@@ -1,6 +1,4 @@
 import {registerApplication ,start} from './application/apps'
-import {createApp ,h} from 'vue'
-
 
 
 document.getElementById('btn').addEventListener('click' ,()=>{

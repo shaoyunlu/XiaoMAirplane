@@ -1,12 +1,10 @@
 export function parseHTML(app){
-
     return new Promise(async (resolve ,reject)=>{
         const pageEntry = app.pageEntry
         const html = await loadSourceText(pageEntry)
         const domparser = new DOMParser()
         const doc = domparser.parseFromString(html, 'text/html')
         resolve(doc)
-        
     })
 }
 
@@ -17,7 +15,7 @@ export function loadSources(doc ,app ,proxyWindow){
         document.getElementById(app.container).innerHTML = doc.body.innerHTML
         Promise.all(loadStyles(styles)).then(data =>{
             isStylesDone = true
-            addStyles(data ,app.pageEntry)
+            addStyles(data ,app.pageEntry ,app.name)
             if (isScriptsDone && isStylesDone) resolve()
         })
         Promise.all(loadScripts(scripts ,app.pageEntry)).then(data =>{
@@ -89,7 +87,7 @@ function loadStyles(styles){
     return promiseArray
 }
 
-function addStyles(styles ,url){
+function addStyles(styles ,url ,appName){
     styles.forEach(item => {
         if (typeof item === 'string') {
             const node = createElement('style', {
