@@ -25,13 +25,12 @@ export async function loadApps(){
 }
 
 export function registerApplication(application){
-    let sandbox = new Sandbox()
+    let sandbox = new Sandbox(application)
     appsMapping[application.name] = {
                                         application : application ,
                                         status : AppStatus.BEFORE_BOOTSTRAP,
                                         doc : null,
-                                        sandbox : sandbox,
-                                        isInit : false
+                                        sandbox : sandbox
                                     }
 }
 
@@ -58,7 +57,6 @@ function bootstrapApp(app){
             let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
             appsMapping[app.name].doc = doc
             appsMapping[app.name].status = AppStatus.BOOTSTRAPPED
-            appsMapping[app.name].isInit = true
             loadSources(appsMapping[app.name].doc ,app ,proxyWindow).then(()=>{
                 resolve()
             })

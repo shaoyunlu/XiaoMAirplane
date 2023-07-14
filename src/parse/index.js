@@ -13,9 +13,10 @@ export function loadSources(doc ,app ,proxyWindow){
     return new Promise((resolve ,reject)=>{
         const { scripts, styles } = extractScriptsAndStyles(doc ,app.pageEntry)
         document.getElementById(app.container).innerHTML = doc.body.innerHTML
-        Promise.all(loadStyles(styles)).then(data =>{
+        Promise.all(loadStyles(styles ,app.pageEntry)).then(data =>{
             isStylesDone = true
-            addStyles(data ,app.pageEntry ,app.name)
+            app.styles = data
+            //addStyles(data ,app.pageEntry ,app.name)
             if (isScriptsDone && isStylesDone) resolve()
         })
         Promise.all(loadScripts(scripts ,app.pageEntry)).then(data =>{
@@ -75,32 +76,42 @@ function executeScripts(scripts ,proxyWindow){
     }
 }
 
-function loadStyles(styles){
+function loadStyles(styles ,url){
     let promiseArray = []
     styles.forEach(style =>{
         if (style.getAttribute('rel') == 'stylesheet'){
             promiseArray.push(new Promise((resolve ,reject)=>{
-              resolve(style)  
+              resolve(style)
             }))
+            //promiseArray.push(loadSourceText(url + '/' + style.getAttribute('href')))
         }
     })
     return promiseArray
 }
 
-function addStyles(styles ,url ,appName){
+export function addStyles(styles ,url ,appName){
     styles.forEach(item => {
         if (typeof item === 'string') {
-            const node = createElement('style', {
-                type: 'text/css',
-                textContent: item,
+            const node = document.createElement('style', {
+                type: 'text/css'
             })
-
+            node.innerHTML = item
+            node.setAttribute('xm-airplane'+appName ,'')
             document.head.appendChild(node)
         } else {
             const linkEl = document.createElement('link')
             linkEl.rel = 'stylesheet'
             linkEl.href = url + '/' + item.getAttribute('href')
+            linkEl.setAttribute('xm-airplane-'+appName ,'')
             document.head.appendChild(linkEl)
         }
+    })
+}
+
+export function removeStyles(appName){
+    const links = document.querySelectorAll(`link[xm-airplane-${appName}]`)
+
+    links.forEach(linkNode => {
+        linkNode.remove()
     })
 }

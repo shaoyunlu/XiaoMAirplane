@@ -1,9 +1,11 @@
 import {wrapEventListener ,clearWrapEventListener ,
     wrapSetInterval ,clearWrapSetInterval ,wrapSetTimeout ,clearWrapSetTimeout} from './event'
+import {addStyles ,removeStyles} from '../parse'
 
 class Sandbox{
-    constructor(){
+    constructor(application){
         this.proxyWindow = null
+        this.app = application
         this.injectKeyMap = new Map()
         this.windowEventMap = new Map()
         this.timeoutSet = new Set()
@@ -34,6 +36,7 @@ class Sandbox{
         })
 
         // 恢复样式
+        addStyles(this.app.styles ,this.app.pageEntry ,this.app.name)
     }
 
     unmount(){
@@ -47,6 +50,9 @@ class Sandbox{
         clearWrapEventListener(this.windowEventMap)
         clearWrapSetInterval(this.intervalSet)
         clearWrapSetTimeout(this.timeoutSet)
+
+        // 删除样式
+        removeStyles(this.app.name)
     }
 }
 
