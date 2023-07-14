@@ -1,39 +1,37 @@
 import AppStatus from './status'
 import {overwriteEventsAndHistory} from '../route/history'
+import {parseHTML ,loadSources} from '../parse'
+import Sandbox from '../sandbox'
 
 const appsMapping = {}
 
 export async function loadApps(){
     //先卸载所有失活的子应用
-    // const toUnMountApp = getAppsWithStatus(AppStatus.MOUNTED)
-    // await Promise.all(toUnMountApp.map(unMountApp))
+    const toUnMountApp = getAppsWithStatus(AppStatus.MOUNTED)
+    await Promise.all(toUnMountApp.map(unMountApp))
 
     // 初始化所有刚注册的子应用
     const toLoadApp = getAppsWithStatus(AppStatus.BEFORE_BOOTSTRAP)
-    toLoadApp.forEach(app =>{
-        bootstrapApp(app)
-    })
-    //await Promise.all(toLoadApp.map(bootstrapApp))
+    await Promise.all(toLoadApp.map(bootstrapApp))
 
     // 加载所有符合条件的子应用
-    // const toMountApp = [
-    //     ...getAppsWithStatus(AppStatus.BOOTSTRAPPED),
-    //     ...getAppsWithStatus(AppStatus.UNMOUNTED)
-    // ]
+    const toMountApp = [
+        ...getAppsWithStatus(AppStatus.BOOTSTRAPPED),
+        ...getAppsWithStatus(AppStatus.UNMOUNTED)
+    ]
 
     // 加载所有符合条件的子应用
-    //await Promise.all(toMountApp.map(mountApp))
+    await Promise.all(toMountApp.map(mountApp))
 }
 
 export function registerApplication(application){
+    let sandbox = new Sandbox()
     appsMapping[application.name] = {
                                         application : application ,
                                         status : AppStatus.BEFORE_BOOTSTRAP,
-                                        sources : {
-                                            js : null,
-                                            css : null,
-                                            html : null
-                                        }
+                                        doc : null,
+                                        sandbox : sandbox,
+                                        isInit : false
                                     }
 }
 
@@ -55,32 +53,45 @@ export function start(){
 }
 
 function bootstrapApp(app){
-    console.log(app)
-    // app.then(tmp =>{
-    //     tmp.bootstrap()
-    //     // 状态置为BOOTSTRAP
-    //     appsMapping[tmp.name].status = AppStatus.BOOTSTRAPPED
-    // })
+    return new Promise((resolve ,reject)=>{
+        parseHTML(app).then((doc)=>{
+            appsMapping[app.name].doc = doc
+            appsMapping[app.name].status = AppStatus.BOOTSTRAPPED
+            resolve()
+        })
+    })
 }
 
 function mountApp(app){
-    // 判断当前url
-    app.then(tmp =>{
-        if (appsMapping[tmp.name].application.activeRule(window.location)){
-            tmp.mount()
-            // 状态设置为MOUNTED
-            appsMapping[tmp.name].status = AppStatus.MOUNTED
+    return new Promise((resolve ,reject)=>{
+        if (appsMapping[app.name].application.activeRule(window.location)){
+            let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
+            // 首次挂载需要先加载资源
+            if (!appsMapping[app.name].isInit){
+                appsMapping[app.name].isInit = true
+                loadSources(appsMapping[app.name].doc ,app ,proxyWindow).then(()=>{
+                    proxyWindow['xm-airplane-'+app.name].mount()
+                    resolve()
+                })
+            }else{
+                proxyWindow['xm-airplane-'+app.name].mount()
+                resolve()
+            }
+            appsMapping[app.name].status = AppStatus.MOUNTED
+        }else{
+            resolve()
         }
     })
 }
 
 function unMountApp(app){
-    // 判断当前url
-    app.then(tmp =>{
-        if (!appsMapping[tmp.name].application.activeRule(window.location)){
-            tmp.unmount()
-            // 状态设置为UNMOUNTED
-            appsMapping[tmp.name].status = AppStatus.UNMOUNTED
+    return new Promise((resolve ,reject)=>{
+        if (!appsMapping[app.name].application.activeRule(window.location)){
+            let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
+            proxyWindow['xm-airplane-' + app.name].unmount()
+            appsMapping[app.name].sandbox.unmount()
+            appsMapping[app.name].status = AppStatus.UNMOUNTED
         }
+        resolve()
     })
 }

@@ -19,12 +19,14 @@ registerApplication({
     name : 'vue1',
     pageEntry : 'http://localhost:4173',
     activeRule : (location) => location.hash === '#/vue1',
-    container : '#app'
+    container : 'xm-airplane'
 })
 
-// registerApplication({
-//     name : 'vue2',
-//     activeRule : (location) => location.hash === '#/vue2'
-// })
+registerApplication({
+    name : 'vue2',
+    pageEntry : 'http://localhost:5000',
+    activeRule : (location) => location.hash === '#/vue2',
+    container : 'xm-airplane'
+})
 
 start()
