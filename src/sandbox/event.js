@@ -1,50 +1,57 @@
-let originalWindowAddEventListener = window.addEventListener
-let originalWindowRemoveEventListener = window.removeEventListener
+import {getCurrentApp} from '../application/apps'
 
 
-export function wrapEventListener(windowEventMap){
+export function wrapEventListener(eventMap ,oriEventListener ,scope){
     return (type ,listener ,options)=>{
-        if (!windowEventMap.get(type)){
-            windowEventMap.set(type ,[])
+        if (!eventMap.get(type)){
+            eventMap.set(type ,[])
         }
-        windowEventMap.get(type).push({listener ,options})
-        return originalWindowAddEventListener.call(window ,type ,listener ,options)
+        eventMap.get(type).push({listener ,options})
+        return oriEventListener.call(scope ,type ,listener ,options)
     }
 }
 
-export function clearWrapEventListener(windowEventMap){
-    for(let [type ,arr] of windowEventMap){
+export function wrapRemoveEventListener(eventMap ,oriEventListener ,scope){
+    return (type ,listener ,options)=>{
+        if (eventMap.get(type)){
+            let handleList = eventMap.get(type)
+            let indexToRemove = handleList.indexOf(listener)
+            handleList.splice(indexToRemove ,1)
+        }
+        return oriEventListener.call(scope ,type ,listener ,options)
+    }
+}
+
+export function clearWrapEventListener(eventMap ,oriRemoveEventListener ,scope){
+    for(let [type ,arr] of eventMap){
         for (let item of arr){
-            originalWindowRemoveEventListener.call(window ,type , item.listener, item.options)
+            oriRemoveEventListener.call(scope ,type , item.listener, item.options)
         }
     }
 }
 
-export function wrapSetTimeout(timeoutSet){
+export function wrapSetTimeout(app){
     return (callback, timeout, ...args)=>{
-        const timer = window.setTimeout(callback ,timeout ,...args)
-        timeoutSet.add(timer)
+        const fn = ()=>{
+            let currentApp = getCurrentApp()
+            if (currentApp.name == app.name){
+                callback && callback()
+            }
+        }
+        const timer = window.setTimeout(fn ,timeout ,...args)
         return timer
     }
 }
 
-export function clearWrapSetTimeout(timeoutSet){
-    for (const tmp of timeoutSet) {
-        window.clearTimeout(tmp)
-    }
-}
-
-export function wrapSetInterval(intervalSet){
+export function wrapSetInterval(app){
     return (callback ,interval ,...args)=>{
-        const intervaler = window.setInterval(callback ,interval ,...args)
-        intervalSet.add(intervaler)
+        const fn = ()=>{
+            let currentApp = getCurrentApp()
+            if (currentApp.name == app.name){
+                callback && callback()
+            }
+        }
+        const intervaler = window.setInterval(fn ,interval ,...args)
         return intervaler
     }
 }
-
-export function clearWrapSetInterval(intervalSet){
-    for (const tmp of intervalSet) {
-        window.clearInterval(tmp)
-    }
-}
-

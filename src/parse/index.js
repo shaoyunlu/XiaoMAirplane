@@ -60,7 +60,6 @@ function loadScripts(scriptElements ,url){
 function executeScripts(scripts ,proxyWindow){
     try {
         scripts.forEach(code =>{
-
             const warpCode = `
                 ;(function(proxyWindow){
                     with (proxyWindow) {
@@ -68,7 +67,6 @@ function executeScripts(scripts ,proxyWindow){
                     }
                 })(this);
             `
-            
             new Function(warpCode).call(proxyWindow)
         })
     } catch (error) {
