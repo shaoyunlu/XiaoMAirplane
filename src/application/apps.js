@@ -105,7 +105,7 @@ function mountApp(app){
     })
 }
 
-function unMountApp(app){
+export function unMountApp(app){
     return new Promise((resolve ,reject)=>{
         //if (!appsMapping[app.name].application.activeRule(window.location)){
             let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
