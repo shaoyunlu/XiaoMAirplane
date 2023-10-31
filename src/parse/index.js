@@ -69,7 +69,7 @@ function executeScripts(scripts ,proxyWindow){
             `
 
             new Function(warpCode).call(proxyWindow ,proxyWindow)
-            //new Function(warpCode).call(window ,window)
+            //console.log(proxyWindow.System)
         })
     } catch (error) {
         console.log(error)
