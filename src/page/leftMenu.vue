@@ -10,12 +10,12 @@ export default defineComponent({
     setup(props ,context) {
         const menuData = ref([
             {name : '首页' ,route : ''},
-            {name : '应用一' ,route : 'app1' ,childNodes : 
+            {name : '应用一' ,route : 'app1' ,children : 
                 [
                     {name : '用户管理' ,route : 'app1/user' ,appName : 'app1'},
                     {name : '角色管理' ,route : 'app1/role' ,appName : 'app1'}
                 ]},
-            {name : '应用二' ,route : 'app2' ,appName : 'app2'}
+            {name : '应用二' ,route : 'app2/user' ,appName : 'app2'}
         ])
 
         const handleNodeClick = (node)=>{

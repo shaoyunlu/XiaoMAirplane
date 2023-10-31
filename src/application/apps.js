@@ -97,8 +97,10 @@ function mountApp(app){
             let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
             appsMapping[app.name].status = AppStatus.MOUNTED
             appsMapping[app.name].sandbox.recover()
-            proxyWindow['xm-airplane-'+app.name].mount()
-            recoverDocumentEvent(app.name)
+            setTimeout(()=>{
+                proxyWindow['xm-airplane-'+app.name].mount()
+                recoverDocumentEvent(app.name)
+            } ,100)
             currentApp = app
         }
         resolve()

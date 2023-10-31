@@ -67,7 +67,9 @@ function executeScripts(scripts ,proxyWindow){
                     }
                 })(this);
             `
-            new Function(warpCode).call(proxyWindow)
+
+            new Function(warpCode).call(proxyWindow ,proxyWindow)
+            //new Function(warpCode).call(window ,window)
         })
     } catch (error) {
         console.log(error)
