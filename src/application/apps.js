@@ -29,7 +29,6 @@ export async function loadApps(){
     })
 
     if (currentApp && tmpApp && tmpApp.name == currentApp.name){
-        console.log('当前系统没切换，直接返回')
         return false
     }
 

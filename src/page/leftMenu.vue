@@ -1,21 +1,29 @@
 <template>
-    <xmv-menu :data="menuData" @nodeClick="handleNodeClick"></xmv-menu>
+    <xmv-menu :data="menuData" @nodeClick="handleNodeClick" ref="menuRef"></xmv-menu>
 </template>
 
 <script>
-import {defineComponent ,nextTick,ref} from 'vue'
+import {defineComponent ,nextTick,onMounted,ref} from 'vue'
 import {getCurrentApp ,unMountApp} from '../application/apps'
 export default defineComponent({
     name:"",
     setup(props ,context) {
+
+        const menuRef = ref(null)
+
         const menuData = ref([
-            {name : '首页' ,route : '' ,value : '11'},
-            {name : '应用一' ,route : 'app1' ,children : 
+            {name : '首页' ,route : '' ,value : ''},
+            {name : '应用一' ,route : 'app1' , value : 'app1' ,children : 
                 [
-                    {name : '用户管理' ,route : 'app1/user' ,appName : 'app1'},
-                    {name : '角色管理' ,route : 'app1/role' ,appName : 'app1'}
+                    {name : '用户管理' ,route : 'app1/user' ,value : 'app1/user' ,appName : 'app1'},
+                    {name : '角色管理' ,route : 'app1/role' ,value : 'app1/role' ,appName : 'app1'}
                 ]},
-            {name : '应用二' ,route : 'app2/user' ,appName : 'app2'}
+            {name : '应用二' ,route : 'app2' ,value : 'app2' ,children : 
+                [
+                    {name : '用户管理' ,route : 'app2/user' ,value : 'app2/user' ,appName : 'app2'},
+                    {name : '角色管理' ,route : 'app2/role' ,value : 'app2/role' ,appName : 'app2'}
+                ]
+            }
         ])
 
         const handleNodeClick = (node)=>{
@@ -32,7 +40,12 @@ export default defineComponent({
             window.location.href = '/#/' + node.route
         }
 
-        return {menuData ,handleNodeClick}
+        onMounted(()=>{
+            let hash = window.location.hash.slice(2)
+            menuRef.value.activeNode(hash)
+        })
+
+        return {menuData ,handleNodeClick ,menuRef}
     }
 })
 </script>

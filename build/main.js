@@ -14806,7 +14806,6 @@ async function loadApps() {
     }
   });
   if (currentApp && tmpApp && tmpApp.name == currentApp.name) {
-    console.log("当前系统没切换，直接返回");
     return false;
   }
   await Promise.all(toUnMountApp.map(unMountApp));
@@ -14895,13 +14894,22 @@ const _export_sfc = (sfc, props) => {
 const _sfc_main$1 = defineComponent({
   name: "",
   setup(props, context) {
+    const menuRef = ref(null);
     const menuData = ref([
-      { name: "首页", route: "", value: "11" },
-      { name: "应用一", route: "app1", children: [
-        { name: "用户管理", route: "app1/user", appName: "app1" },
-        { name: "角色管理", route: "app1/role", appName: "app1" }
+      { name: "首页", route: "", value: "" },
+      { name: "应用一", route: "app1", value: "app1", children: [
+        { name: "用户管理", route: "app1/user", value: "app1/user", appName: "app1" },
+        { name: "角色管理", route: "app1/role", value: "app1/role", appName: "app1" }
       ] },
-      { name: "应用二", route: "app2/user", appName: "app2" }
+      {
+        name: "应用二",
+        route: "app2",
+        value: "app2",
+        children: [
+          { name: "用户管理", route: "app2/user", value: "app2/user", appName: "app2" },
+          { name: "角色管理", route: "app2/role", value: "app2/role", appName: "app2" }
+        ]
+      }
     ]);
     const handleNodeClick = (node) => {
       let currentApp2 = getCurrentApp();
@@ -14914,14 +14922,19 @@ const _sfc_main$1 = defineComponent({
       }
       window.location.href = "/#/" + node.route;
     };
-    return { menuData, handleNodeClick };
+    onMounted(() => {
+      let hash = window.location.hash.slice(2);
+      menuRef.value.activeNode(hash);
+    });
+    return { menuData, handleNodeClick, menuRef };
   }
 });
 function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
   const _component_xmv_menu = resolveComponent("xmv-menu");
   return openBlock(), createBlock(_component_xmv_menu, {
     data: _ctx.menuData,
-    onNodeClick: _ctx.handleNodeClick
+    onNodeClick: _ctx.handleNodeClick,
+    ref: "menuRef"
   }, null, 8, ["data", "onNodeClick"]);
 }
 const LeftMenu = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1]]);
