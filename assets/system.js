@@ -638,7 +638,6 @@
       if (scripts.length != 3){
         lastScript = scripts[0]
       }
-
       if (lastScript) {
         // 适配 ===> 重新指定资源的url
         if (window.xmAirplaneGetCurrentApp){
