@@ -5,8 +5,8 @@
   "main": "./dist/xiaomeng-vue-ui.mjs",
   "scripts": {
     "dev": "vite --port 3000",
-    "build": "vite build --config vite.build.config.js",
-    "preview": "vite build & vite preview --port 3000"
+    "build": "vite build",
+    "preview": "vite preview --port 3000"
   },
   "author": "",
   "license": "ISC",

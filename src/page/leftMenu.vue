@@ -9,7 +9,7 @@ export default defineComponent({
     name:"",
     setup(props ,context) {
         const menuData = ref([
-            {name : '首页' ,route : ''},
+            {name : '首页' ,route : '' ,value : '11'},
             {name : '应用一' ,route : 'app1' ,children : 
                 [
                     {name : '用户管理' ,route : 'app1/user' ,appName : 'app1'},

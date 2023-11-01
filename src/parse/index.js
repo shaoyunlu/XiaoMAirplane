@@ -52,7 +52,12 @@ function extractScriptsAndStyles(doc){
 function loadScripts(scriptElements ,url){
     let promiseArray = []
     scriptElements.forEach(script =>{
-        promiseArray.push(loadSourceText(url + '/' + script.getAttribute('src')))
+        let scriptSrc = script.getAttribute('src')
+        if (scriptSrc.indexOf('http') >= 0){
+            promiseArray.push(loadSourceText(scriptSrc));
+        }else{
+            promiseArray.push(loadSourceText(url + '/' + scriptSrc));
+        }
     })
     return promiseArray
 }

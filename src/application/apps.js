@@ -5,6 +5,11 @@ import {parseHTML ,loadSources} from '../parse'
 import Sandbox from '../sandbox'
 
 const appsMapping = {}
+
+window.xmAirplaneGetCurrentApp = ()=>{
+    return currentApp
+}
+
 let currentApp = null
 
 export function getCurrentApp(){

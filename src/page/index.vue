@@ -30,12 +30,12 @@ export default defineComponent({
                 container : 'xm-airplane-container'
             })
 
-            // registerApplication({
-            //     name : 'app2',
-            //     pageEntry : 'http://localhost:5000',
-            //     activeRule : (location) => location.hash.indexOf('#/app2') >= 0,
-            //     container : 'xm-airplane-container'
-            // })
+            registerApplication({
+                name : 'app2',
+                pageEntry : 'http://localhost:5000',
+                activeRule : (location) => location.hash.indexOf('#/app2') >= 0,
+                container : 'xm-airplane-container'
+            })
 
             start()
         })
