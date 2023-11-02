@@ -7,10 +7,15 @@
             <left-menu></left-menu>
         </template>
         <template #right>
-            <div id="xm-airplane-container"></div>
+            <div id="xm-airplane-container">
+                
+            </div>
+            <div id="xm-airplane-self">
+                <router-view></router-view>
+            </div>
         </template>
-
     </xmv-layout>
+    
 </template>
 
 <script>

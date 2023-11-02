@@ -13,6 +13,7 @@ export default defineComponent({
 
         const menuData = ref([
             {name : '首页' ,route : '' ,value : ''},
+            {name : '系统自身' ,route : 'self' ,value : 'self'},
             {name : '应用一' ,route : 'app1' , value : 'app1' ,children : 
                 [
                     {name : '用户管理' ,route : 'app1/user' ,value : 'app1/user' ,appName : 'app1'},
