@@ -30,7 +30,7 @@ export function clearWrapEventListener(eventMap ,oriRemoveEventListener ,scope){
     }
 }
 
-export function wrapSetTimeout(app){
+export function wrapSetTimeout(app ,timeoutMap){
     return (callback, timeout, ...args)=>{
         const fn = ()=>{
             let currentApp = getCurrentApp()
@@ -39,11 +39,19 @@ export function wrapSetTimeout(app){
             }
         }
         const timer = window.setTimeout(fn ,timeout ,...args)
+        timeoutMap.set(timer ,timer)
         return timer
     }
 }
 
-export function wrapSetInterval(app){
+export function wrapClearTimeout(map){
+    return (timeouter)=>{
+        map.delete(timeouter)
+        window.clearTimeout(timeouter)
+    }
+}
+
+export function wrapSetInterval(app ,intervalMap){
     return (callback ,interval ,...args)=>{
         const fn = ()=>{
             let currentApp = getCurrentApp()
@@ -52,6 +60,15 @@ export function wrapSetInterval(app){
             }
         }
         const intervaler = window.setInterval(fn ,interval ,...args)
+        intervalMap.set(intervaler ,intervaler)
         return intervaler
     }
 }
+
+export function wrapClearInterval(map){
+    return (intervaler)=>{
+        map.delete(intervaler)
+        window.clearInterval(intervaler)
+    }
+}
+

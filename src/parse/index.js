@@ -1,3 +1,5 @@
+import {getCurrentApp} from '../application/apps'
+
 export function parseHTML(app){
     return new Promise(async (resolve ,reject)=>{
         const pageEntry = app.pageEntry
@@ -72,9 +74,8 @@ function executeScripts(scripts ,proxyWindow){
                     }
                 })(this);
             `
-
-            new Function(warpCode).call(proxyWindow ,proxyWindow)
-            //console.log(proxyWindow.System)
+            const replacedCode = warpCode.replace(/\/static\//g, getCurrentApp().pageEntry +'/static/');
+            new Function(replacedCode).call(proxyWindow ,proxyWindow)
         })
     } catch (error) {
         console.log(error)

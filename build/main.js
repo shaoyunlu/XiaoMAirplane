@@ -14643,7 +14643,8 @@ function executeScripts(scripts, proxyWindow) {
                     }
                 })(this);
             `;
-      new Function(warpCode).call(proxyWindow, proxyWindow);
+      const replacedCode = warpCode.replace(/\/static\//g, getCurrentApp().pageEntry + "/static/");
+      new Function(replacedCode).call(proxyWindow, proxyWindow);
     });
   } catch (error) {
     console.log(error);
@@ -14710,7 +14711,7 @@ function clearWrapEventListener(eventMap, oriRemoveEventListener, scope) {
     }
   }
 }
-function wrapSetTimeout(app2) {
+function wrapSetTimeout(app2, timeoutMap) {
   return (callback, timeout, ...args) => {
     const fn2 = () => {
       let currentApp2 = getCurrentApp();
@@ -14719,10 +14720,17 @@ function wrapSetTimeout(app2) {
       }
     };
     const timer = window.setTimeout(fn2, timeout, ...args);
+    timeoutMap.set(timer, timer);
     return timer;
   };
 }
-function wrapSetInterval(app2) {
+function wrapClearTimeout(map) {
+  return (timeouter) => {
+    map.delete(timeouter);
+    window.clearTimeout(timeouter);
+  };
+}
+function wrapSetInterval(app2, intervalMap) {
   return (callback, interval, ...args) => {
     const fn2 = () => {
       let currentApp2 = getCurrentApp();
@@ -14731,7 +14739,14 @@ function wrapSetInterval(app2) {
       }
     };
     const intervaler = window.setInterval(fn2, interval, ...args);
+    intervalMap.set(intervaler, intervaler);
     return intervaler;
+  };
+}
+function wrapClearInterval(map) {
+  return (intervaler) => {
+    map.delete(intervaler);
+    window.clearInterval(intervaler);
   };
 }
 let originalWindowAddEventListener = window.addEventListener;
@@ -14742,14 +14757,18 @@ class Sandbox {
     this.app = application;
     this.injectKeyMap = /* @__PURE__ */ new Map();
     this.windowEventMap = /* @__PURE__ */ new Map();
+    this.timeoutMap = /* @__PURE__ */ new Map();
+    this.intervalMap = /* @__PURE__ */ new Map();
     this.init();
   }
   init() {
     this.proxyWindow = createWindowProxy(this.injectKeyMap, this.proxyDocument);
     this.proxyWindow.addEventListener = wrapEventListener(this.windowEventMap, originalWindowAddEventListener, window);
     this.proxyWindow.removeEventListener = wrapRemoveEventListener(this.windowEventMap, originalWindowRemoveEventListener, window);
-    this.proxyWindow.setInterval = wrapSetInterval(this.app);
-    this.proxyWindow.setTimeout = wrapSetTimeout(this.app);
+    this.proxyWindow.setTimeout = wrapSetTimeout(this.app, this.timeoutMap);
+    this.proxyWindow.setInterval = wrapSetInterval(this.app, this.intervalMap);
+    this.proxyWindow.clearTimeout = wrapClearTimeout(this.timeoutMap);
+    this.proxyWindow.clearInterval = wrapClearInterval(this.intervalMap);
   }
   recover() {
     this.windowEventMap.forEach((handleList, eventName) => {
@@ -14761,6 +14780,14 @@ class Sandbox {
   }
   unmount() {
     clearWrapEventListener(this.windowEventMap, originalWindowRemoveEventListener, window);
+    this.timeoutMap.keys().forEach((key) => {
+      this.timeoutMap.delete(key);
+      window.clearTimeout(key);
+    });
+    this.intervalMap.keys().forEach((key) => {
+      this.intervalMap.delete(key);
+      window.clearInterval(key);
+    });
     removeStyles(this.app.name);
   }
 }
@@ -14793,7 +14820,7 @@ const appsMapping = {};
 window.xmAirplaneGetCurrentApp = () => {
   return currentApp;
 };
-let currentApp = null;
+let currentApp = {};
 function getCurrentApp() {
   return currentApp;
 }
@@ -14819,6 +14846,7 @@ async function loadApps() {
 }
 function registerApplication(application) {
   let sandbox = new Sandbox(application);
+  application.sandbox = sandbox;
   appsMapping[application.name] = {
     application,
     status: AppStatus.BEFORE_BOOTSTRAP,
@@ -14876,11 +14904,16 @@ function mountApp(app2) {
 }
 function unMountApp(app2) {
   return new Promise((resolve2, reject) => {
-    let proxyWindow = appsMapping[app2.name].sandbox.proxyWindow;
-    proxyWindow["xm-airplane-" + app2.name].unmount();
-    appsMapping[app2.name].sandbox.unmount();
-    clearDocumentEvent(app2.name);
-    appsMapping[app2.name].status = AppStatus.UNMOUNTED;
+    if (app2.name) {
+      let proxyWindow = appsMapping[app2.name].sandbox.proxyWindow;
+      proxyWindow["xm-airplane-" + app2.name].unmount();
+      appsMapping[app2.name].sandbox.unmount();
+      clearDocumentEvent(app2.name);
+      appsMapping[app2.name].status = AppStatus.UNMOUNTED;
+      if (app2.name == currentApp.name) {
+        currentApp = {};
+      }
+    }
     resolve2();
   });
 }

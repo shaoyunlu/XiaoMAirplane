@@ -602,7 +602,24 @@
     var baseOrigin = location.origin;
   }
 
+  function loadSourceText(url){
+    return new Promise((resolve ,reject) =>{
+        const xhr = new XMLHttpRequest()
+        xhr.onload = (res)=>{
+            resolve(res.target.response)
+        }
+
+        xhr.onerror = reject
+        xhr.onabort = reject
+        xhr.open('get' ,url)
+        xhr.send()
+    })
+  }
+
   systemJSPrototype.createScript = function (url) {
+    // 适配 ===> 这块儿需要改成使用new Function方式执行脚本
+    return url
+
     var script = document.createElement('script');
     script.async = true;
     // Only add cross origin for actual cross origin
@@ -667,29 +684,55 @@
       return autoImportRegistration;
     }
     var loader = this;
-
+    
     return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
-      return new Promise(function (resolve, reject) {
-        script.addEventListener('error', function () {
-          reject(Error(errMsg(3, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+      // 适配 ===> 主动加载 JS 并执行
+      return new Promise((resolve ,reject)=>{
+        loadSourceText(script).then(res=>{
+          let currentApp = window.xmAirplaneGetCurrentApp()
+          console.log(currentApp)
+          let proxyWindow = currentApp.sandbox.proxyWindow
+          const warpCode = `
+                ;(function(proxyWindow){
+                  with (proxyWindow) {
+                      (function(window){${res}\n}).call(proxyWindow, proxyWindow)
+                  }
+              })(this);
+          `
+          const replacedCode = warpCode.replace(/\/static\//g, currentApp.pageEntry +'/static/');
+          new Function(replacedCode).call(proxyWindow ,proxyWindow)
+          var register = loader.getRegister(url);
+          if (register && register[0] === lastAutoImportDeps)
+                clearTimeout(lastAutoImportTimeout);
+          resolve(register);
+        })
+      })
+      
+      /**
+       * 
+        return new Promise(function (resolve, reject) {
+          script.addEventListener('error', function () {
+            reject(Error(errMsg(3, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+          });
+          script.addEventListener('load', function () {
+            document.head.removeChild(script);
+            // Note that if an error occurs that isn't caught by this if statement,
+            // that getRegister will return null and a "did not instantiate" error will be thrown.
+            if (lastWindowErrorUrl === url) {
+              reject(lastWindowError);
+            }
+            else {
+              debugger
+              var register = loader.getRegister(url);
+              // Clear any auto import registration for dynamic import scripts during load
+              if (register && register[0] === lastAutoImportDeps)
+                clearTimeout(lastAutoImportTimeout);
+              resolve(register);
+            }
+          });
+          document.head.appendChild(script);
         });
-        script.addEventListener('load', function () {
-          document.head.removeChild(script);
-          // Note that if an error occurs that isn't caught by this if statement,
-          // that getRegister will return null and a "did not instantiate" error will be thrown.
-          if (lastWindowErrorUrl === url) {
-            reject(lastWindowError);
-          }
-          else {
-            var register = loader.getRegister(url);
-            // Clear any auto import registration for dynamic import scripts during load
-            if (register && register[0] === lastAutoImportDeps)
-              clearTimeout(lastAutoImportTimeout);
-            resolve(register);
-          }
-        });
-        document.head.appendChild(script);
-      });
+      */
     });
   };
 

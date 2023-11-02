@@ -15943,8 +15943,8 @@
                     }
                 })(this);
             `;
-              new Function(warpCode).call(proxyWindow, proxyWindow);
-              //console.log(proxyWindow.System)
+              const replacedCode = warpCode.replace(/\/static\//g, getCurrentApp().pageEntry + '/static/');
+              new Function(replacedCode).call(proxyWindow, proxyWindow);
             });
           } catch (error) {
             console.log(error);
@@ -16016,7 +16016,7 @@
             }
           }
         }
-        function wrapSetTimeout(app) {
+        function wrapSetTimeout(app, timeoutMap) {
           return (callback, timeout, ...args) => {
             const fn = () => {
               let currentApp = getCurrentApp();
@@ -16025,10 +16025,17 @@
               }
             };
             const timer = window.setTimeout(fn, timeout, ...args);
+            timeoutMap.set(timer, timer);
             return timer;
           };
         }
-        function wrapSetInterval(app) {
+        function wrapClearTimeout(map) {
+          return timeouter => {
+            map.delete(timeouter);
+            window.clearTimeout(timeouter);
+          };
+        }
+        function wrapSetInterval(app, intervalMap) {
           return (callback, interval, ...args) => {
             const fn = () => {
               let currentApp = getCurrentApp();
@@ -16037,7 +16044,14 @@
               }
             };
             const intervaler = window.setInterval(fn, interval, ...args);
+            intervalMap.set(intervaler, intervaler);
             return intervaler;
+          };
+        }
+        function wrapClearInterval(map) {
+          return intervaler => {
+            map.delete(intervaler);
+            window.clearInterval(intervaler);
           };
         }
         let originalWindowAddEventListener = window.addEventListener;
@@ -16048,14 +16062,18 @@
             this.app = application;
             this.injectKeyMap = new Map();
             this.windowEventMap = new Map();
+            this.timeoutMap = new Map();
+            this.intervalMap = new Map();
             this.init();
           }
           init() {
             this.proxyWindow = createWindowProxy(this.injectKeyMap, this.proxyDocument);
             this.proxyWindow.addEventListener = wrapEventListener(this.windowEventMap, originalWindowAddEventListener, window);
             this.proxyWindow.removeEventListener = wrapRemoveEventListener(this.windowEventMap, originalWindowRemoveEventListener, window);
-            this.proxyWindow.setInterval = wrapSetInterval(this.app);
-            this.proxyWindow.setTimeout = wrapSetTimeout(this.app);
+            this.proxyWindow.setTimeout = wrapSetTimeout(this.app, this.timeoutMap);
+            this.proxyWindow.setInterval = wrapSetInterval(this.app, this.intervalMap);
+            this.proxyWindow.clearTimeout = wrapClearTimeout(this.timeoutMap);
+            this.proxyWindow.clearInterval = wrapClearInterval(this.intervalMap);
           }
           recover() {
             // 恢复绑定事件
@@ -16074,6 +16092,14 @@
           unmount() {
             // 清除绑定的全局事件
             clearWrapEventListener(this.windowEventMap, originalWindowRemoveEventListener, window);
+            this.timeoutMap.keys().forEach(key => {
+              this.timeoutMap.delete(key);
+              window.clearTimeout(key);
+            });
+            this.intervalMap.keys().forEach(key => {
+              this.intervalMap.delete(key);
+              window.clearInterval(key);
+            });
 
             // 删除样式
             removeStyles(this.app.name);
@@ -16108,7 +16134,7 @@
         window.xmAirplaneGetCurrentApp = () => {
           return currentApp;
         };
-        let currentApp = null;
+        let currentApp = {};
         function getCurrentApp() {
           return currentApp;
         }
@@ -16138,6 +16164,7 @@
         }
         function registerApplication(application) {
           let sandbox = new Sandbox(application);
+          application.sandbox = sandbox;
           appsMapping[application.name] = {
             application: application,
             status: AppStatus.BEFORE_BOOTSTRAP,
@@ -16195,13 +16222,16 @@
         }
         function unMountApp(app) {
           return new Promise((resolve, reject) => {
-            //if (!appsMapping[app.name].application.activeRule(window.location)){
-            let proxyWindow = appsMapping[app.name].sandbox.proxyWindow;
-            proxyWindow['xm-airplane-' + app.name].unmount();
-            appsMapping[app.name].sandbox.unmount();
-            clearDocumentEvent(app.name);
-            appsMapping[app.name].status = AppStatus.UNMOUNTED;
-            //}
+            if (app.name) {
+              let proxyWindow = appsMapping[app.name].sandbox.proxyWindow;
+              proxyWindow['xm-airplane-' + app.name].unmount();
+              appsMapping[app.name].sandbox.unmount();
+              clearDocumentEvent(app.name);
+              appsMapping[app.name].status = AppStatus.UNMOUNTED;
+              if (app.name == currentApp.name) {
+                currentApp = {};
+              }
+            }
             resolve();
           });
         }

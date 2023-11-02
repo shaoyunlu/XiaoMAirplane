@@ -10,7 +10,7 @@ window.xmAirplaneGetCurrentApp = ()=>{
     return currentApp
 }
 
-let currentApp = null
+let currentApp = {}
 
 export function getCurrentApp(){
     return currentApp
@@ -50,6 +50,7 @@ export async function loadApps(){
 
 export function registerApplication(application){
     let sandbox = new Sandbox(application)
+    application.sandbox = sandbox
     appsMapping[application.name] = {
                                         application : application ,
                                         status : AppStatus.BEFORE_BOOTSTRAP,
@@ -113,13 +114,16 @@ function mountApp(app){
 
 export function unMountApp(app){
     return new Promise((resolve ,reject)=>{
-        //if (!appsMapping[app.name].application.activeRule(window.location)){
+        if (app.name){
             let proxyWindow = appsMapping[app.name].sandbox.proxyWindow
             proxyWindow['xm-airplane-' + app.name].unmount()
             appsMapping[app.name].sandbox.unmount()
             clearDocumentEvent(app.name)
             appsMapping[app.name].status = AppStatus.UNMOUNTED
-        //}
+            if (app.name == currentApp.name){
+                currentApp = {}
+            }
+        }
         resolve()
     })
 }

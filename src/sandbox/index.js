@@ -1,6 +1,7 @@
 import {wrapEventListener ,wrapRemoveEventListener ,
     clearWrapEventListener ,
-    wrapSetInterval ,wrapSetTimeout} from './event'
+    wrapSetInterval ,wrapSetTimeout,
+    wrapClearInterval ,wrapClearTimeout} from './event'
 import {addStyles ,removeStyles} from '../parse'
 
 let originalWindowAddEventListener = window.addEventListener
@@ -12,6 +13,9 @@ class Sandbox{
         this.app = application
         this.injectKeyMap = new Map()
         this.windowEventMap = new Map()
+
+        this.timeoutMap = new Map()
+        this.intervalMap = new Map()
         this.init()
     }
 
@@ -22,8 +26,12 @@ class Sandbox{
         this.proxyWindow.removeEventListener 
                     = wrapRemoveEventListener(this.windowEventMap ,originalWindowRemoveEventListener ,window)
 
-        this.proxyWindow.setInterval = wrapSetInterval(this.app)
-        this.proxyWindow.setTimeout = wrapSetTimeout(this.app)
+        this.proxyWindow.setTimeout = wrapSetTimeout(this.app ,this.timeoutMap)            
+        this.proxyWindow.setInterval = wrapSetInterval(this.app ,this.intervalMap)
+
+        this.proxyWindow.clearTimeout = wrapClearTimeout(this.timeoutMap)
+        this.proxyWindow.clearInterval = wrapClearInterval(this.intervalMap)
+        
     }
 
     recover(){
@@ -41,6 +49,16 @@ class Sandbox{
     unmount(){
         // 清除绑定的全局事件
         clearWrapEventListener(this.windowEventMap ,originalWindowRemoveEventListener ,window)
+
+        this.timeoutMap.keys().forEach(key =>{
+            this.timeoutMap.delete(key)
+            window.clearTimeout(key)
+        })
+
+        this.intervalMap.keys().forEach(key =>{
+            this.intervalMap.delete(key)
+            window.clearInterval(key)
+        })
 
         // 删除样式
         removeStyles(this.app.name)
