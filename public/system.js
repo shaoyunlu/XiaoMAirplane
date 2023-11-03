@@ -690,7 +690,6 @@
       return new Promise((resolve ,reject)=>{
         loadSourceText(script).then(res=>{
           let currentApp = window.xmAirplaneGetCurrentApp()
-          console.log(currentApp)
           let proxyWindow = currentApp.sandbox.proxyWindow
           const warpCode = `
                 ;(function(proxyWindow){
